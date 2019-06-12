@@ -3,6 +3,7 @@
 	   xmlns:aop="http://www.springframework.org/schema/aop"
 	   xmlns:tx="http://www.springframework.org/schema/tx"
 	   xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+	   xmlns:context="http://www.springframework.org/schema/context"
 	   xsi:schemaLocation="http://www.springframework.org/schema/beans
            http://www.springframework.org/schema/beans/spring-beans.xsd
            http://www.springframework.org/schema/aop
@@ -10,7 +11,7 @@
            http://www.springframework.org/schema/tx
            http://www.springframework.org/schema/tx/spring-tx.xsd
            http://www.springframework.org/schema/data/jpa
-           http://www.springframework.org/schema/data/jpa/spring-jpa.xsd">
+           http://www.springframework.org/schema/data/jpa/spring-jpa.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
 
 	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
 		<property name="ignoreResourceNotFound" value="true"/>
@@ -18,6 +19,7 @@
 	</bean>
 	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
 		<property name="url" value="jdbc:oracle:thin:@192.168.0.218:1521:ORCL" />
+        <!--<property name="url" value="jdbc:log4jdbc:oracle:thin:@192.168.0.218:1521:ORCL" />-->
 		<property name="username" value="CHAINWORK_UI_TEST_DATA" />
 		<property name="password" value="F4y750" />
 		<!--<property name="filters" value="stat" />-->
@@ -69,7 +71,7 @@
 				<property name="generateDdl" value="false" />
 				 <property name="database" value="ORACLE" />
 				<property name="databasePlatform" value="org.hibernate.dialect.Oracle10gDialect" />
-				<property name="showSql" value="true" />
+				<property name="showSql" value="false" />
 			</bean>
 		</property>
 		<property name="jpaDialect">
@@ -92,4 +94,13 @@
 	<bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
 		<property name="entityManagerFactory" ref="entityManagerFactory"/>
 	</bean>
+
+    <bean id="entityManager" factory-bean="entityManagerFactory" factory-method="createEntityManager"></bean>
+    <bean id="jpaQueryFactory" class="com.querydsl.jpa.impl.JPAQueryFactory">
+        <constructor-arg name="entityManager" ref="entityManager"></constructor-arg>
+    </bean>
+
+	<context:component-scan base-package="com.xyh.demo.spring.repository"></context:component-scan>
+	<context:annotation-config></context:annotation-config>
+
 </beans>
