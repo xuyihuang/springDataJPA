@@ -1,8 +1,13 @@
 package com.xyh.demo.spring;
 
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.StringTemplate;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.xyh.demo.spring.item.EsUserQueryItem;
+import com.xyh.demo.spring.model.EsUserModel;
+import com.xyh.demo.spring.model.QEsUserModel;
 import com.xyh.demo.spring.model.RpReportLogModel;
 import com.xyh.demo.spring.repository.EsUserRepository;
 import com.xyh.demo.spring.repository.RpReportLogRepository;
@@ -10,7 +15,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.data.domain.Page;
 
+import java.util.Date;
 import java.util.List;
+
+import static com.querydsl.core.types.dsl.Expressions.stringTemplate;
 
 /**
  * Hello world!
@@ -78,7 +86,7 @@ public class App
 
         //queryDSL
         JPAQueryFactory jpaQueryFactory=(JPAQueryFactory)applicationContext.getBean(JPAQueryFactory.class);
-        /*rpReportLogModels=jpaQueryFactory.select(QRpReportLogModel.rpReportLogModel).from(QRpReportLogModel.rpReportLogModel).where(QRpReportLogModel.rpReportLogModel.rprlStatus.eq(new Long(2))).fetch();*/
+        //rpReportLogModels=jpaQueryFactory.select(QRpReportLogModel.rpReportLogModel).from(QRpReportLogModel.rpReportLogModel).where(QRpReportLogModel.rpReportLogModel.rprlStatus.eq(new Long(2))).fetch();
         /*List<EsUserModel> jpaQuery=jpaQueryFactory.select(QEsUserModel.esUserModel)
                 .from(QEsUserModel.esUserModel, QRpReportLogModel.rpReportLogModel)
                 .where(QRpReportLogModel.rpReportLogModel.rprlStatus.eq(new Long(2)).and(QEsUserModel.esUserModel.esusId.eq(QRpReportLogModel.rpReportLogModel.rprlId)))
@@ -87,11 +95,30 @@ public class App
                 .from(QEsUserModel.esUserModel, QRpReportLogModel.rpReportLogModel)
                 .where(QRpReportLogModel.rpReportLogModel.rprlStatus.eq(new Long(2)).and(QEsUserModel.esUserModel.esusId.eq(QRpReportLogModel.rpReportLogModel.rprlId)))
                 .fetch();*/
-
-        /*BooleanExpression booleanExpression= Expressions.dateTemplate(Date.class, "to_date({0},'{1s}')", Expressions.stringTemplate("function('TO_CHAR', {0}, {1})", QEsUserModel.esUserModel.createTime,"yyyy-MM-dd"), "yyyy-MM-dd")
-                .gt(Expressions.dateTemplate(Date.class, "to_date({0},'{1s}')", Expressions.stringTemplate("function('TO_CHAR', {0}, {1})", QEsUserModel.esUserModel.modifyTime,"yyyy-MM-dd"), "yyyy-MM-dd"));
+        BooleanExpression booleanExpression= Expressions.dateTemplate(Date.class, "to_date({0},'{1s}')", stringTemplate("function('TO_CHAR', {0}, {1})", QEsUserModel.esUserModel.createTime,"yyyy-MM-dd"), "yyyy-MM-dd")
+                .gt(Expressions.dateTemplate(Date.class, "to_date({0},'{1s}')", stringTemplate("function('TO_CHAR', {0}, {1})", QEsUserModel.esUserModel.modifyTime,"yyyy-MM-dd"), "yyyy-MM-dd"));
+        BooleanExpression systemExpression=QEsUserModel.esUserModel.creator.eq("system").and(QEsUserModel.esUserModel.esusEscoId.isNull()).and(QEsUserModel.esUserModel.esusDefaultProjectId.isNull());
+        systemExpression=systemExpression.or(
+                QEsUserModel.esUserModel.creator.eq("company").and(QEsUserModel.esUserModel.esusEscoId.eq(new Long(101)))
+        );
         List<EsUserModel> esUserModels=jpaQueryFactory.select(QEsUserModel.esUserModel).from(QEsUserModel.esUserModel)
-            .where(booleanExpression).fetch();*/
+            .where(booleanExpression
+                    .and(
+
+                            systemExpression
+                                    .or(
+                                        QEsUserModel.esUserModel.creator.eq("project").and(QEsUserModel.esUserModel.esusEscoId.eq(new Long(111))).and(QEsUserModel.esUserModel.esusDefaultProjectId.eq(new Long(222)))
+                                    )
+                    )
+                    .and(QEsUserModel.esUserModel.esusAccountRule.eq("admin"))
+            ).fetch();
+
+       /* BooleanExpression booleanExpression= esUserModel.esusEscoId.eq(new Long(100))
+        .and(esUserModel.createTime.year().goe(esUserModel.modifyTime.year()))
+                .and(esUserModel.createTime.month().goe(esUserModel.modifyTime.month()))
+                .and(esUserModel.createTime.dayOfMonth().gt(esUserModel.modifyTime.dayOfMonth()));
+        List<EsUserModel> esUserModels=jpaQueryFactory.select(esUserModel).from(esUserModel)
+                .where(booleanExpression).orderBy(esUserModel.modifyTime.asc()).fetch();*/
 
         //rpReportLogModels=jpaQueryFactory.selectFrom(QRpReportLogModel.rpReportLogModel).where(QRpReportLogModel.rpReportLogModel.rprlId.eq(new Long(22))).setLockMode(LockModeType.PESSIMISTIC_WRITE).fetch();
 
